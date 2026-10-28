@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#081523">
+<title>Zero Trust | Simulador de acesso</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg:#081523; --surface:#102236; --surface-hi:#152b43; --stroke:#29445c;
+  --text:#f3f8fc; --sub:#b7c7d4; --quiet:#829bad; --cyan:#69e0e6;
+  --green:#66e0b4; --red:#ff8d9f; --amber:#ffd182;
+}
+* { box-sizing:border-box; }
+body { margin:0; min-height:100vh; color:var(--text); font-family:Inter,"Segoe UI",Arial,sans-serif; background:radial-gradient(ellipse 55% 45% at 100% 0%,#15374a 0%,transparent 73%),var(--bg); }
+button,select { font:inherit; }
+button { cursor:pointer; }
+button:focus-visible,select:focus-visible { outline:2px solid var(--cyan); outline-offset:3px; }
+.app { max-width:1310px; padding:28px 42px 26px; margin:auto; }
+.topbar { display:flex; align-items:center; justify-content:space-between; padding-bottom:20px; border-bottom:1px solid var(--stroke); }
+.brand { display:flex; align-items:center; gap:12px; color:var(--cyan); }
+.symbol { display:grid; place-items:center; border:1px solid #376579; border-radius:12px; width:40px; height:40px; background:rgba(105,224,230,.055); }
+.brand-name { color:var(--text); font-size:14px; font-weight:850; letter-spacing:.19em; }
+.brand-sub { font-size:10px; font-weight:700; letter-spacing:.09em; color:var(--quiet); margin-top:4px; }
+.full { font-size:13px; color:var(--sub); background:transparent; border:1px solid var(--stroke); border-radius:10px; padding:11px 14px; }
+.full:hover { background:var(--surface-hi); }
+.hero { margin:27px 0 26px; display:flex; align-items:end; justify-content:space-between; gap:20px; }
+.hint { display:inline-block; font-size:11px; font-weight:850; letter-spacing:.11em; color:var(--cyan); margin-bottom:10px; }
+h1 { margin:0; font-size:clamp(29px,3.7vw,49px); font-weight:850; line-height:1.08; letter-spacing:-.044em; }
+.hero p { margin:11px 0 0; color:var(--sub); font-size:15px; }
+.target { display:flex; flex-direction:column; align-items:flex-end; gap:6px; flex:none; background:#102c40; border:1px solid #28556c; border-radius:12px; padding:14px 17px; }
+.target span { font-size:10px; text-transform:uppercase; color:#91bac9; letter-spacing:.09em; font-weight:800; }
+.target b { font-size:15px; color:var(--text); }
+.layout { display:grid; grid-template-columns: minmax(280px,.82fr) minmax(0,1.55fr); gap:17px; align-items:start; }
+.panel { background:linear-gradient(158deg,#10253a,#0d1e31); border:1px solid var(--stroke); border-radius:18px; padding:23px; }
+.section-top { display:flex; justify-content:space-between; gap:8px; align-items:center; margin-bottom:18px; }
+.section-top h2 { margin:0; font-size:21px; font-weight:780; letter-spacing:-.022em; }
+.section-top .step { color:var(--quiet); font-size:11px; font-weight:800; letter-spacing:.05em; }
+.profiles { display:grid; gap:12px; }
+.profile { width:100%; display:flex; align-items:center; gap:13px; background:#142c42; border:1px solid #315069; border-radius:13px; padding:15px 16px; text-align:left; color:var(--text); transition:background .14s,border .14s; }
+.profile:hover { background:#1b374f; }
+.profile[aria-pressed="true"] { border-color:var(--cyan); background:#1a3d50; box-shadow:inset 3px 0 0 var(--cyan); }
+.avatar { display:grid; place-items:center; flex:none; width:43px; height:43px; border-radius:12px; background:#285169; color:#e3fafe; font-weight:800; font-size:15px; }
+.profile-body { flex:1; min-width:0; }
+.profile-body strong { display:block; font-size:16px; font-weight:780; }
+.profile-body small { display:block; color:var(--sub); font-size:12px; margin-top:4px; }
+.checkmark { color:var(--cyan); font-size:24px; visibility:hidden; }
+.profile[aria-pressed="true"] .checkmark { visibility:visible; }
+.panel-foot { margin-top:18px; border-top:1px solid var(--stroke); padding-top:14px; font-size:12px; color:var(--quiet); display:flex; align-items:center; gap:8px; }
+.panel-foot svg { flex:none; }
+.conditions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.condition { display:block; min-width:0; background:#142c42; border:1px solid #315069; padding:13px 14px; border-radius:12px; }
+.condition .fieldhead { display:flex; align-items:center; justify-content:space-between; margin-bottom:9px; gap:8px; }
+.condition .fieldhead span:first-child { color:var(--sub); font-size:12px; font-weight:700; }
+.dot { background:var(--green); width:8px; height:8px; border-radius:100%; flex:none; }
+.condition.attention .dot { background:var(--amber); }
+.condition.denied .dot { background:var(--red); }
+.condition select { width:100%; appearance:none; background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23a9c6d5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right center; border:0; padding:3px 24px 3px 0; border-radius:4px; color:var(--text); font-size:16px; font-weight:790; cursor:pointer; }
+.condition select option { color:var(--text); background:#162c42; }
+.actionrow { display:flex; align-items:center; gap:13px; margin-top:20px; }
+.evaluate { border:0; color:#062331; background:var(--cyan); font-size:15px; font-weight:850; border-radius:11px; min-height:48px; padding:12px 22px; flex:1; }
+.evaluate:hover { background:#8ff0f1; }
+.reset { border:0; background:transparent; color:var(--sub); font-size:12px; padding:12px 5px; white-space:nowrap; }
+.reset:hover { color:#fff; }
+.result { margin-top:15px; background:#10293b; border:1px solid #3a5a6e; border-radius:13px; padding:19px; display:flex; align-items:center; gap:15px; min-height:92px; }
+.result-icon { display:grid; place-items:center; width:44px; height:44px; flex:none; font-size:23px; font-weight:800; border-radius:50%; color:var(--sub); background:rgba(255,255,255,.045); }
+.result-title { font-size:19px; line-height:1.25; font-weight:850; letter-spacing:-.015em; }
+.result-desc { color:var(--sub); font-size:13px; margin-top:5px; line-height:1.35; }
+.result.permit { border-color:#397b67; background:#102f32; } .result.permit .result-icon, .result.permit .result-title { color:var(--green); }
+.result.deny { border-color:#90515e; background:#32232f; } .result.deny .result-icon, .result.deny .result-title { color:var(--red); }
+.result.checking { border-color:#917446; background:#302b29; } .result.checking .result-icon, .result.checking .result-title { color:var(--amber); }
+footer { display:flex; justify-content:space-between; gap:10px; align-items:center; margin-top:23px; font-size:11px; color:var(--quiet); }
+footer a { color:#a3dce2; }
+@media (max-width:880px) { .app { padding:20px 20px 26px; } .layout { grid-template-columns:1fr; } .profiles { grid-template-columns:repeat(3,minmax(0,1fr)); } .profile { padding:13px; } .profile-body strong { font-size:14px; } .target { display:none; } }
+@media (max-width:610px) { .app { padding:16px 13px 25px; } .hero { margin:24px 0; } h1 { font-size:31px; } .hero p { line-height:1.45; } .profiles { grid-template-columns:1fr; gap:8px; } .panel { padding:17px; } .conditions { grid-template-columns:1fr; } .condition { padding:12px; } .actionrow { flex-wrap:wrap; } .evaluate { flex-basis:100%; } .reset { margin:auto; } footer { align-items:start; flex-direction:column; line-height:1.5; } }
+@media (prefers-reduced-motion:reduce) { * { transition:none!important; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <span class="symbol" aria-hidden="true">
+        <svg width="23" height="26" viewBox="0 0 24 27" fill="none"><path d="M12 2 21 5.8V12c0 6.1-4.3 10.1-9 12.6C7.3 22.1 3 18.1 3 12V5.8L12 2Z" stroke="currentColor" stroke-width="1.7"/><path d="m8 13 2.7 2.7L16.5 10" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+      <div><div class="brand-name">ZERO TRUST</div><div class="brand-sub">SIMULADOR DE ACESSO</div></div>
+    </div>
+    <button class="full" id="fullscreen" type="button" aria-label="Alternar tela cheia">⛶ Tela cheia</button>
+  </header>
+
+  <div class="hero">
+    <div><span class="hint">DEMONSTRAÇÃO PRÁTICA</span><h1>Quem pode acessar?</h1><p>O mesmo sistema. Três pessoas. Decisões diferentes.</p></div>
+    <div class="target"><span>Recurso protegido</span><b>▣ &nbsp; Sistema financeiro</b></div>
+  </div>
+
+  <main class="layout">
+    <section class="panel" aria-labelledby="profiles-h">
+      <div class="section-top"><h2 id="profiles-h">Escolha um usuário</h2><span class="step">01 / 02</span></div>
+      <div class="profiles" id="profiles"></div>
+      <div class="panel-foot"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></svg> Todos tentam acessar o sistema financeiro.</div>
+    </section>
+
+    <section class="panel" aria-labelledby="conditions-h">
+      <div class="section-top"><h2 id="conditions-h">Condições de acesso</h2><span class="step">02 / 02</span></div>
+      <div class="conditions">
+        <label class="condition" id="f-permission"><span class="fieldhead"><span>Autorização</span><span class="dot" aria-hidden="true"></span></span><select id="permission"><option value="yes">Permitida</option><option value="no">Sem permissão</option></select></label>
+        <label class="condition" id="f-device"><span class="fieldhead"><span>Dispositivo</span><span class="dot" aria-hidden="true"></span></span><select id="device"><option value="yes">Conforme</option><option value="no">Não gerenciado</option></select></label>
+        <label class="condition" id="f-mfa"><span class="fieldhead"><span>MFA</span><span class="dot" aria-hidden="true"></span></span><select id="mfa"><option value="yes">Confirmado</option><option value="no">Pendente</option></select></label>
+        <label class="condition" id="f-risk"><span class="fieldhead"><span>Risco</span><span class="dot" aria-hidden="true"></span></span><select id="risk"><option value="low">Baixo</option><option value="high">Elevado</option></select></label>
+      </div>
+      <div class="actionrow">
+        <button type="button" id="evaluate" class="evaluate">Avaliar acesso →</button>
+        <button type="button" id="reset" class="reset" title="Restaurar os critérios originais do perfil">↺ Restaurar</button>
+      </div>
+      <div class="result" id="result" role="status" aria-live="polite" aria-atomic="true">
+        <span class="result-icon" id="result-icon" aria-hidden="true">?</span>
+        <div><div class="result-title" id="result-title">Pronto para avaliar</div><div class="result-desc" id="result-desc">Selecione “Avaliar acesso” para ver a decisão.</div></div>
+      </div>
+    </section>
+  </main>
+  <footer><span>Simulação didática: as regras variam conforme a política de cada organização.</span><span>Referências: <a href="https://www.nist.gov/publications/zero-trust-architecture" target="_blank" rel="noopener noreferrer">NIST</a> · <a href="https://www.cisa.gov/zero-trust-maturity-model" target="_blank" rel="noopener noreferrer">CISA</a></span></footer>
+</div>
+<script>
+(() => {
+  'use strict';
+  const profiles = [
+    { name: 'Ana Martins', area: 'Financeiro', initials: 'AM', permission: true, device: true, mfa: true, risk: 'low' },
+    { name: 'Bruno Costa', area: 'Marketing', initials: 'BC', permission: false, device: true, mfa: true, risk: 'low' },
+    { name: 'Carla Ribeiro', area: 'Financeiro', initials: 'CR', permission: true, device: false, mfa: false, risk: 'high' }
+  ];
+  const byId = id => document.getElementById(id);
+  const selects = {permission:byId('permission'), device:byId('device'), mfa:byId('mfa'), risk:byId('risk')};
+  let selected = 0, state = {};
+  const buttons = [];
+
+  function resetDecision(message='Selecione “Avaliar acesso” para ver a decisão.') {
+    byId('result').className='result';
+    byId('result-icon').textContent='?';
+    byId('result-title').textContent='Pronto para avaliar';
+    byId('result-desc').textContent=message;
+  }
+  function updateCards() {
+    const colorTypes = {
+      permission: state.permission ? '' : 'denied',
+      device: state.device ? '' : 'attention',
+      mfa: state.mfa ? '' : 'attention',
+      risk: state.risk==='low' ? '' : 'attention'
+    };
+    Object.keys(colorTypes).forEach(k => {
+      byId('f-'+k).className='condition '+colorTypes[k];
+    });
+  }
+  function selectProfile(index) {
+    selected=index; state={...profiles[index]};
+    buttons.forEach((b,i)=>b.setAttribute('aria-pressed',String(i===index)));
+    selects.permission.value=state.permission?'yes':'no';
+    selects.device.value=state.device?'yes':'no';
+    selects.mfa.value=state.mfa?'yes':'no';
+    selects.risk.value=state.risk;
+    updateCards(); resetDecision();
+  }
+  function pullState() {
+    state.permission=selects.permission.value==='yes';
+    state.device=selects.device.value==='yes';
+    state.mfa=selects.mfa.value==='yes';
+    state.risk=selects.risk.value;
+    updateCards(); resetDecision('Condição alterada. Avalie novamente.');
+  }
+  function evaluate() {
+    let title, desc, icon, tone;
+    if (!state.permission) {
+      title='Acesso negado'; desc='Sem permissão para o sistema financeiro.'; icon='×'; tone='deny';
+    } else if (!state.device || !state.mfa || state.risk==='high') {
+      title='Verificação adicional'; icon='!'; tone='checking';
+      const pending=[];
+      if (!state.mfa) pending.push('MFA pendente');
+      if (!state.device) pending.push('dispositivo não gerenciado');
+      if (state.risk==='high') pending.push('risco elevado');
+      desc=pending.join(' · ')+'.';
+    } else {
+      title='Acesso permitido'; desc='Permissão e condições de segurança atendidas.'; icon='✓'; tone='permit';
+    }
+    byId('result').className='result '+tone;
+    byId('result-icon').textContent=icon;
+    byId('result-title').textContent=title;
+    byId('result-desc').textContent=desc;
+  }
+  function drawProfiles() {
+    const list=byId('profiles');
+    profiles.forEach((p,i)=>{
+      const btn=document.createElement('button'); btn.type='button'; btn.className='profile';
+      btn.setAttribute('aria-pressed','false');
+      btn.innerHTML=`<span class="avatar">${p.initials}</span><span class="profile-body"><strong>${p.name}</strong><small>${p.area}</small></span><span class="checkmark" aria-hidden="true">✓</span>`;
+      btn.addEventListener('click',()=>selectProfile(i)); list.append(btn); buttons.push(btn);
+    });
+  }
+  Object.values(selects).forEach(s=>s.addEventListener('change',pullState));
+  byId('evaluate').addEventListener('click',evaluate);
+  byId('reset').addEventListener('click',()=>selectProfile(selected));
+  byId('fullscreen').addEventListener('click',()=>{
+    if (!document.fullscreenElement && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{});
+    else if (document.exitFullscreen) document.exitFullscreen().catch(()=>{});
+  });
+  drawProfiles(); selectProfile(0);
+})();
+</script>
+</body>
+</html>
